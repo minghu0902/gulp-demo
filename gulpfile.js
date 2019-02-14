@@ -68,7 +68,7 @@ gulp.task('js', function () {
       .pipe(source(file.split('.')[0] + '.js'))
       .pipe(buffer())
       .pipe(sourcemaps.init({ loadMaps: true }))
-      .pipe(uglify())
+      .pipe(gulpif(condition, uglify()))
       .pipe(sourcemaps.write('./sourcemap/'))
       .pipe(gulpif(condition, rev())) // 添加hash后缀
       .pipe(gulp.dest("dist/js"))
