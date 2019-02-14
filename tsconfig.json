@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",                         
+    "module": "umd",                   
+    "outDir": "js",                       
+    "strict": true,                           
+    "sourceMap": true
+    }
+}
