@@ -15,7 +15,7 @@ module.exports = {
     image: resolveDev('images/**.**'),
     js: resolveDev('js/page/*.{js, ts}'),
     entry: resolveDev('js/page/'),
-    static: resolveDev('../static/**/*'),
+    static: resolveDev('static/**/*'),
     component: resolveDev('components/'),
     font: resolveDev('font/*')
   },

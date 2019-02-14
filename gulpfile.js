@@ -131,7 +131,7 @@ gulp.task('static', function () {
     .pipe(gulp.dest(buildConfig.static))
 })
 
-// 清除 dist 文件
+// 清除文件
 gulp.task('clean', function () {
   return del(['./dist', './rev']);
 })
