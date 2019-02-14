@@ -6,14 +6,15 @@ const tsify = require("tsify");
 const babelify = require("babelify");
 const source = require('vinyl-source-stream');
 const buffer = require('vinyl-buffer');
+const merge = require('merge-stream');
+const del = require('del');
+const chalk = require('chalk')
 const sourcemaps = require('gulp-sourcemaps');
 const gutil = require('gulp-util');
-const merge = require('merge-stream');
 const uglify = require('gulp-uglify');
 const gulpif = require('gulp-if');
 const rev = require('gulp-rev'); // 为静态文件生成hash值 && 生成源文件和添加hash后文件的映射 rev.manifest.json
 const revCollector = require('gulp-rev-collector'); // 根据rev生成的manifest.json文件中的映射, 去替换文件名称, 也可以替换路径
-const del = require('del');
 const sass = require('gulp-sass');
 const cleanCSS = require('gulp-clean-css');
 const postcss = require('gulp-postcss');
@@ -21,7 +22,6 @@ const htmlmin = require('gulp-htmlmin')
 const imagemin = require('gulp-imagemin');
 const fileinclude = require('gulp-file-include')
 const zip = require('gulp-zip')
-const chalk = require('chalk')
 
 // 打包配置
 const config = require('./config');
@@ -192,10 +192,12 @@ gulp.task('build:chalk', function(done) {
 gulp.task('default', function(done) {
   done();
   console.log(chalk.green(`
-    启动开发环境：    npm run dev 或 npm run start
+    启动开发环境：    npm run dev
+    启动uat环境：     npm run uat
+    启动prod环境：    npm run prod
     构建开发环境：    npm run build:dev
     构建uat 环境：    npm run build:uat
-    构建生产环境：    npm run build:prod
+    构建prod环境：    npm run build:prod
     运行dist下代码：  npm run build:server
     压缩dist下代码：  npm run zip
   `));

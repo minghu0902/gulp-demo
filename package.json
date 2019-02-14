@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "cross-env NODE_ENV=development gulp dev",
-    "start": "npm run dev",
+    "dev": "cross-env NODE_ENV=development BUILD_ENV=dev gulp dev",
+    "uat": "cross-env NODE_ENV=development BUILD_ENV=uat gulp dev",
+    "prod": "cross-env NODE_ENV=development BUILD_ENV=prod gulp dev",
     "build": "cross-env NODE_ENV=production gulp build",
     "build:dev": "cross-env BUILD_ENV=dev npm run build",
     "build:uat": "cross-env BUILD_ENV=uat npm run build",
