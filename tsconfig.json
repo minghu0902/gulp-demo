@@ -4,6 +4,11 @@
     "module": "umd",                   
     "outDir": "js",                       
     "strict": true,                           
-    "sourceMap": true
+    "sourceMap": true,
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "envConfig": ["./config/env/env.dev.js"]
     }
+  }
 }

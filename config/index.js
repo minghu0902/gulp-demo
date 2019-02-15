@@ -6,7 +6,7 @@ function resolveDev(dir) {
 
 function resolveBuild(dir) {
   return path.join(__dirname, '../dist/', dir);
-}
+}  
 
 module.exports = {
   dev: {
@@ -15,9 +15,10 @@ module.exports = {
     image: resolveDev('images/**.**'),
     js: resolveDev('js/page/*.{js, ts}'),
     entry: resolveDev('js/page/'),
+    common: resolveDev('js/common/'),
     static: resolveDev('static/**/*'),
     component: resolveDev('components/'),
-    font: resolveDev('font/*')
+    font: resolveDev('font/*') 
   },
   build: {
     html: resolveBuild('.'),
@@ -27,8 +28,9 @@ module.exports = {
     static: resolveBuild('static/'),
     font: resolveBuild('font/')
   },
+  env: path.join(__dirname, './env/index.js'),
   zip: {
-    name: 'ecp_web.zip',
+    name: 'ecp_web',
     path: resolveBuild('**/*'),
     dest: path.join(__dirname, '../zip/')
   },

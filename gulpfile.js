@@ -3,12 +3,13 @@ const path = require('path');
 const gulp = require('gulp');
 const browserify = require("browserify");
 const tsify = require("tsify");
+const aliasify = require("aliasify");
 const babelify = require("babelify");
 const source = require('vinyl-source-stream');
 const buffer = require('vinyl-buffer');
 const merge = require('merge-stream');
 const del = require('del');
-const chalk = require('chalk')
+const chalk = require('chalk');
 const sourcemaps = require('gulp-sourcemaps');
 const gutil = require('gulp-util');
 const uglify = require('gulp-uglify');
@@ -18,10 +19,10 @@ const revCollector = require('gulp-rev-collector'); // 根据rev生成的manifes
 const sass = require('gulp-sass');
 const cleanCSS = require('gulp-clean-css');
 const postcss = require('gulp-postcss');
-const htmlmin = require('gulp-htmlmin')
+const htmlmin = require('gulp-htmlmin');
 const imagemin = require('gulp-imagemin');
-const fileinclude = require('gulp-file-include')
-const zip = require('gulp-zip')
+const fileinclude = require('gulp-file-include');
+const zip = require('gulp-zip');
 
 // 打包配置
 const config = require('./config');
@@ -50,19 +51,26 @@ function getFiles(dir) {
 // 获取页面入口文件
 const entrys = getFiles(devConfig.entry);
 
-// 打包 js
-gulp.task('js', function () {
+// 模块别名配置
+const alias = {
+  // 使用环境配置文件时，import envConfig from 'envConfig'
+  envConfig: path.join(__dirname, `./config/env/env.${BUILD_ENV}.js`)
+}
+
+// 打包入口js
+gulp.task('js:entry', function () {
   const tasks = entrys.map(file => {
     return browserify({
-      basedir: '.',
-      debug: true,
       entries: [devConfig.entry + file],
-      cache: {},
-      packageCache: {}
     })
       .plugin(tsify)
       .transform(babelify, {
-        extensions: ['.ts']
+        extensions: ['.ts'],
+        plugins: [
+          ['module-resolver', {
+            'alias': alias
+          }]
+        ]
       })
       .bundle()
       .pipe(source(file.split('.')[0] + '.js'))
@@ -71,12 +79,41 @@ gulp.task('js', function () {
       .pipe(gulpif(condition, uglify()))
       .pipe(sourcemaps.write('./sourcemap/'))
       .pipe(gulpif(condition, rev())) // 添加hash后缀
-      .pipe(gulp.dest("dist/js"))
+      .pipe(gulp.dest(buildConfig.js))
       .pipe(gulpif(condition, rev.manifest())) // 生成映射文件
       .pipe(gulpif(condition, gulp.dest('rev/js'))) // 输出映射文件
   });
   return merge(tasks);
 })
+
+// 打包公共js
+gulp.task('js:common', function() {
+  return browserify({
+    entries: [path.join(devConfig.common, '/index.ts')]
+  })
+    .plugin(tsify)
+    .transform(babelify, {
+      extensions: ['.ts'],
+      plugins: [
+        ['module-resolver', {
+          'alias': alias
+        }]
+      ]
+    })
+    .bundle()
+    .pipe(source('common.js'))
+    .pipe(buffer())
+    .pipe(sourcemaps.init({ loadMaps: true }))
+    .pipe(gulpif(condition, uglify()))
+    .pipe(sourcemaps.write('./sourcemap/'))
+    .pipe(gulpif(condition, rev())) // 添加hash后缀
+    .pipe(gulp.dest(buildConfig.js))
+    .pipe(gulpif(condition, rev.manifest())) // 生成映射文件
+    .pipe(gulpif(condition, gulp.dest('rev/js'))) // 输出映射文件
+})
+
+// 打包 js
+gulp.task('js', gulp.parallel('js:entry', 'js:common'));
 
 // 打包 css
 gulp.task('css', function () {
@@ -117,7 +154,7 @@ gulp.task('image', function () {
 })
 
 // 打包字体
-gulp.task('font', () => {
+gulp.task('font', function() {
   return gulp.src(devConfig.font)
     .pipe(gulpif(condition, rev()))
     .pipe(gulp.dest(buildConfig.font))
@@ -152,8 +189,10 @@ gulp.task('rev:css', function () {
 
 // 打包 dist 下的文件
 gulp.task('zip', function () {
+  const d = new Date();
+  const zipName = [config.zip.name, String(d.getFullYear()) + (d.getMonth() + 1) + d.getDate()]
   return gulp.src(config.zip.path)
-    .pipe(zip(config.zip.name))
+    .pipe(zip(zipName.join('_') + '.zip'))
     .pipe(gulp.dest(config.zip.dest))
 })
 
@@ -161,7 +200,7 @@ gulp.task('zip', function () {
 gulp.task('watch', function () {
   gulp.watch('./src/**/*.html', gulp.parallel('html')).on('change', reload)
   gulp.watch('./src/css/*.scss', gulp.parallel('css')).on('change', reload)
-  gulp.watch('./src/js/**/*', gulp.parallel('js')).on('change', reload)
+  gulp.watch(['./src/js/**/*', './src/api/*', './config/**/*'], gulp.parallel('js')).on('change', reload)
   gulp.watch('./src/images/**.**', gulp.parallel('image')).on('change', reload)
   gulp.watch('./static/**/*', gulp.parallel('static')).on('change', reload)
 })
@@ -206,3 +245,12 @@ gulp.task('default', function(done) {
 gulp.task('rev', gulp.parallel("rev:html", "rev:css"));
 gulp.task('build', gulp.series('clean', gulp.parallel('html', 'css', 'js', 'image', 'font', 'static'), 'rev', 'build:chalk'));
 gulp.task('dev', gulp.series('build', gulp.parallel('server', 'watch')));
+
+
+/**
+ *  目前还存在的问题：
+ *  1. 启动本地服务时打包和构建时打包 生成的文件都存放在 dist 下面，考虑分开
+ *  2. 打包 js 的任务中有公共代码，需要进行优化
+ *  3. 可能还有细节没配置好，后面讨论之后再完善
+ *  4. tslint 还没加入配置
+ */

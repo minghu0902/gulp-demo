@@ -2,5 +2,6 @@ $color: red;
 
 body { 
     color: $color;
+    background: url('../images/bodyColorblack.png') center no-repeat;
     transition: all .6s ease;
 }
