@@ -1,7 +1,6 @@
-$color: red;
+@import './common/common.scss';
 
 body { 
-    color: $color;
-    background: url('../images/bodyColorblack.png') center no-repeat;
+    color: $color--primary;
     transition: all .6s ease;
-}
+}  

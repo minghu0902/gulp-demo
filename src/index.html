@@ -2,15 +2,13 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  @@include('./components/meta.html')
   <link rel="stylesheet" href="./css/index.css">
   <title>首页</title>
 </head>
 
 <body>
-  @@include('./header.html', {
+  @@include('./components/header.html', {
     "id": "header",
     "nav": [
       { "text": "首页", "title": "首页", "href": "/" },
@@ -26,7 +24,7 @@
       </ul>
     </script>
   </div>
-  @@include('./comScript.html')
+  @@include('./components/script.html')
   <script src="./js/index.js"></script>
 </body>
 

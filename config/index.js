@@ -8,8 +8,12 @@ function resolveBuild(dir) {
   return path.join(__dirname, '../dist/', dir);
 }  
 
+// 获取打包环境
+const BUILD_ENV = process.env.BUILD_ENV || 'dev';
+
 module.exports = {
   dev: {
+    root: path.join(__dirname, '../src/'),
     html: resolveDev('/*.html'),
     css: resolveDev('css/*.{scss, css}'),
     image: resolveDev('images/**.**'),
@@ -17,7 +21,7 @@ module.exports = {
     entry: resolveDev('js/page/'),
     common: resolveDev('js/common/'),
     static: resolveDev('static/**/*'),
-    component: resolveDev('components/'),
+    component: this.root,
     font: resolveDev('font/*') 
   },
   build: {
@@ -28,7 +32,6 @@ module.exports = {
     static: resolveBuild('static/'),
     font: resolveBuild('font/')
   },
-  env: path.join(__dirname, './env/index.js'),
   zip: {
     name: 'ecp_web',
     path: resolveBuild('**/*'),
@@ -39,5 +42,9 @@ module.exports = {
     open: false,
     port: 9090,
     notify: false
+  },
+  alias: {
+    // 使用环境配置文件时，import envConfig from 'envConfig'
+    envConfig: path.join(__dirname, `./env/env.${BUILD_ENV}.js`)
   }
 }

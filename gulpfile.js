@@ -3,7 +3,6 @@ const path = require('path');
 const gulp = require('gulp');
 const browserify = require("browserify");
 const tsify = require("tsify");
-const aliasify = require("aliasify");
 const babelify = require("babelify");
 const source = require('vinyl-source-stream');
 const buffer = require('vinyl-buffer');
@@ -17,6 +16,7 @@ const gulpif = require('gulp-if');
 const rev = require('gulp-rev'); // 为静态文件生成hash值 && 生成源文件和添加hash后文件的映射 rev.manifest.json
 const revCollector = require('gulp-rev-collector'); // 根据rev生成的manifest.json文件中的映射, 去替换文件名称, 也可以替换路径
 const sass = require('gulp-sass');
+const sassImport = require('gulp-sass-import');
 const cleanCSS = require('gulp-clean-css');
 const postcss = require('gulp-postcss');
 const htmlmin = require('gulp-htmlmin');
@@ -24,11 +24,14 @@ const imagemin = require('gulp-imagemin');
 const fileinclude = require('gulp-file-include');
 const zip = require('gulp-zip');
 
+sass.compiler = require('node-sass');
+
 // 打包配置
 const config = require('./config');
 const devConfig = config.dev;
 const buildConfig = config.build;
 const serverConfig = config.server;
+const alias = config.alias;
 
 // server
 const browserSync = require('browser-sync').create()
@@ -50,12 +53,6 @@ function getFiles(dir) {
 
 // 获取页面入口文件
 const entrys = getFiles(devConfig.entry);
-
-// 模块别名配置
-const alias = {
-  // 使用环境配置文件时，import envConfig from 'envConfig'
-  envConfig: path.join(__dirname, `./config/env/env.${BUILD_ENV}.js`)
-}
 
 // 打包入口js
 gulp.task('js:entry', function () {
@@ -118,6 +115,7 @@ gulp.task('js', gulp.parallel('js:entry', 'js:common'));
 // 打包 css
 gulp.task('css', function () {
   return gulp.src(devConfig.css)
+    .pipe(sassImport())
     .pipe(sass().on('error', sass.logError))
     .pipe(gulpif(condition, cleanCSS()))
     .pipe(postcss('./.postcssrc.js'))
@@ -199,7 +197,7 @@ gulp.task('zip', function () {
 // 监听文件变化
 gulp.task('watch', function () {
   gulp.watch('./src/**/*.html', gulp.parallel('html')).on('change', reload)
-  gulp.watch('./src/css/*.scss', gulp.parallel('css')).on('change', reload)
+  gulp.watch('./src/css/**/*.{scss, css}', gulp.parallel('css')).on('change', reload)
   gulp.watch(['./src/js/**/*', './src/api/*', './config/**/*'], gulp.parallel('js')).on('change', reload)
   gulp.watch('./src/images/**.**', gulp.parallel('image')).on('change', reload)
   gulp.watch('./static/**/*', gulp.parallel('static')).on('change', reload)
@@ -250,7 +248,7 @@ gulp.task('dev', gulp.series('build', gulp.parallel('server', 'watch')));
 /**
  *  目前还存在的问题：
  *  1. 启动本地服务时打包和构建时打包 生成的文件都存放在 dist 下面，考虑分开
- *  2. 打包 js 的任务中有公共代码，需要进行优化
- *  3. 可能还有细节没配置好，后面讨论之后再完善
- *  4. tslint 还没加入配置
+ *  2. 监听文件变化的时候，如果修改了 js 文件，会打包所有的 js 文件，如果文件过多，那么编译就会越慢。考虑能不能只编译修改过的文件
+ *  3. tslint, csslint 还没加入配置
+ *  4. 可能还有细节没配置好，后面讨论之后再完善
  */
