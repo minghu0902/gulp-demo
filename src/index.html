@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   @@include('./components/meta.html')
   <link rel="stylesheet" href="./css/index.css">
@@ -8,22 +7,19 @@
 </head>
 
 <body>
-  @@include('./components/header.html', {
-    "id": "header",
-    "nav": [
-      { "text": "首页", "title": "首页", "href": "/" },
-      { "text": "关于我们", "title": "关于我们", "href": "/about.html" }
-    ]
-  })
-  <div id="container">
-    <script id="list" type="text/html">
-      <ul>
-        {{ each list as $item }}
-        <li>{{ $item }}</li>
-        {{ /each }}
-      </ul>
-    </script>
-  </div>
+  @@include('./components/header.html')
+
+  <div id="container"></div>
+
+  <!-- 模板写到外层，方便多次渲染 -->
+  <script id="list" type="text/html">
+    <ul>
+      {{ each list as $item }}
+      <li>{{ $item }}</li>
+      {{ /each }}
+    </ul>
+  </script> 
+
   @@include('./components/script.html')
   <script src="./js/index.js"></script>
 </body>
