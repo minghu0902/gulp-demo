@@ -23,6 +23,9 @@ const htmlmin = require('gulp-htmlmin');
 const imagemin = require('gulp-imagemin');
 const fileinclude = require('gulp-file-include');
 const zip = require('gulp-zip');
+const rename = require('gulp-rename');
+const plugins = require('gulp-load-plugins')();
+const vinylPaths = require('vinyl-paths');
 
 sass.compiler = require('node-sass');
 
@@ -38,8 +41,8 @@ const browserSync = require('browser-sync').create()
 const reload = browserSync.reload
 
 // 判断环境变量
-const env = process.env.NODE_ENV || 'development';
-const condition = env === 'production';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const condition = NODE_ENV === 'production';
 
 // 获取打包环境
 const BUILD_ENV = process.env.BUILD_ENV || 'dev';
@@ -58,7 +61,11 @@ const entrys = getFiles(devConfig.entry);
 gulp.task('js:entry', function () {
   const tasks = entrys.map(file => {
     return browserify({
-      entries: [devConfig.entry + file],
+      basedir: '.',
+      debug: true,
+      cache: {},
+      packageCache: {},
+      entries: [devConfig.entry + file]
     })
       .plugin(tsify)
       .transform(babelify, {
@@ -75,17 +82,18 @@ gulp.task('js:entry', function () {
       .pipe(sourcemaps.init({ loadMaps: true }))
       .pipe(gulpif(condition, uglify()))
       .pipe(sourcemaps.write('./sourcemap/'))
-      .pipe(gulpif(condition, rev())) // 添加hash后缀
       .pipe(gulp.dest(buildConfig.js))
-      .pipe(gulpif(condition, rev.manifest())) // 生成映射文件
-      .pipe(gulpif(condition, gulp.dest('rev/js'))) // 输出映射文件
   });
   return merge(tasks);
-})
+}) 
 
 // 打包公共js
 gulp.task('js:common', function() {
   return browserify({
+    basedir: '.',
+    debug: true,
+    cache: {},
+    packageCache: {},
     entries: [path.join(devConfig.common, '/index.ts')]
   })
     .plugin(tsify)
@@ -103,9 +111,16 @@ gulp.task('js:common', function() {
     .pipe(sourcemaps.init({ loadMaps: true }))
     .pipe(gulpif(condition, uglify()))
     .pipe(sourcemaps.write('./sourcemap/'))
+    .pipe(gulp.dest(buildConfig.js))
+})
+
+// 给 dist 下的js添加hash
+gulp.task('rev:js', function() {
+  return gulp.src([`${buildConfig.js}/**/*.js`, `!${buildConfig.env}/*`])
+    .pipe(vinylPaths(del))
     .pipe(gulpif(condition, rev())) // 添加hash后缀
     .pipe(gulp.dest(buildConfig.js))
-    .pipe(gulpif(condition, rev.manifest())) // 生成映射文件
+    .pipe(gulpif(condition, rev.manifest({ merge: true }))) // 生成映射文件
     .pipe(gulpif(condition, gulp.dest('rev/js'))) // 输出映射文件
 })
 
@@ -168,20 +183,20 @@ gulp.task('static', function () {
 
 // 清除文件
 gulp.task('clean', function () {
-  return del(['./dist', './rev']);
+  return del([NODE_ENV === 'development' ? './dev/' : './dist/', './rev']);
 })
 
 // 替换html文件中的路径
-gulp.task('rev:html', function () {
+gulp.task('revC:html', function () {
   return gulp.src(['rev/**/*.json', path.join(buildConfig.html, '/*.html')])
-    .pipe(revCollector())
+    .pipe(revCollector({replaceReved:true}))
     .pipe(gulp.dest(buildConfig.html));
 });
 
 // 替换打包后css文件中的路径
-gulp.task('rev:css', function () {
+gulp.task('revC:css', function () {
   return gulp.src(['rev/**/*.json', path.join(buildConfig.css, '/*.css')])
-    .pipe(revCollector())
+    .pipe(revCollector({replaceReved:true}))
     .pipe(gulp.dest(buildConfig.css));
 })
 
@@ -192,6 +207,13 @@ gulp.task('zip', function () {
   return gulp.src(config.zip.path)
     .pipe(zip(zipName.join('_') + '.zip'))
     .pipe(gulp.dest(config.zip.dest))
+})
+
+// 打包环境配置文件
+gulp.task('env', function () {
+  return gulp.src(devConfig.env)
+    .pipe(rename('env.js'))
+    .pipe(gulp.dest(buildConfig.env))
 })
 
 // 监听文件变化
@@ -240,15 +262,6 @@ gulp.task('default', function(done) {
   `));
 })
 
-gulp.task('rev', gulp.parallel("rev:html", "rev:css"));
-gulp.task('build', gulp.series('clean', gulp.parallel('html', 'css', 'js', 'image', 'font', 'static'), 'rev', 'build:chalk'));
+gulp.task('revC', gulp.parallel("revC:html", "revC:css"));
+gulp.task('build', gulp.series('clean', gulp.parallel('env', 'html', 'css', 'js', 'image', 'font', 'static'), 'rev:js', 'revC', 'build:chalk'));
 gulp.task('dev', gulp.series('build', gulp.parallel('server', 'watch')));
-
-
-/**
- *  目前还存在的问题：
- *  1. 启动本地服务时打包和构建时打包 生成的文件都存放在 dist 下面，考虑分开
- *  2. 监听文件变化的时候，如果修改了 js 文件，会打包所有的 js 文件，如果文件过多，那么编译就会越慢。考虑能不能只编译修改过的文件
- *  3. tslint, csslint 还没加入配置
- *  4. 可能还有细节没配置好，后面讨论之后再完善
- */

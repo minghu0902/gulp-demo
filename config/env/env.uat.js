@@ -1,3 +1,3 @@
-export default {
+var envConfig = {
   host: 'http://uat'
  }

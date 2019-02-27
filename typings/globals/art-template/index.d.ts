@@ -1,1 +1,0 @@
-declare function template(id: string, data: any): string;

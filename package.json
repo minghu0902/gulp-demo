@@ -11,7 +11,7 @@
     "build:dev": "cross-env BUILD_ENV=dev npm run build",
     "build:uat": "cross-env BUILD_ENV=uat npm run build",
     "build:prod": "cross-env BUILD_ENV=prod npm run build",
-    "build:server": "npx http-server ./dist -p 8090 -o",
+    "server": "npx http-server ./dist -p 8090 -o",
     "zip": "npx gulp zip"
   },
   "keywords": [],
@@ -36,6 +36,7 @@
     "gulp-htmlmin": "^5.0.1",
     "gulp-if": "^2.0.2",
     "gulp-imagemin": "^5.0.3",
+    "gulp-load-plugins": "^1.5.0",
     "gulp-postcss": "^8.0.0",
     "gulp-preprocess": "^3.0.2",
     "gulp-rename": "^1.4.0",
@@ -56,6 +57,7 @@
     "tsify": "^4.0.1",
     "typescript": "^3.3.3",
     "vinyl-buffer": "^1.0.1",
+    "vinyl-paths": "^2.1.0",
     "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
